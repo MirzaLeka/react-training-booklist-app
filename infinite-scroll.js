@@ -8,28 +8,30 @@ function App() {
 
   const [hasMore, sethasMore] = useState(true);
 
-  const [page, setpage] = useState(2);
+  const [page, setpage] = useState(1);
+
+  const [maxPagesCount, setMaxPagesCount] = useState(1)
 
   useEffect(() => {
     const getComments = async () => {
       const res = await fetch(
         `https://jsonplaceholder.typicode.com/comments?_page=1&_limit=20`
       );
-      const data = await res.json();
-      console.log('original data :>> ', data.data);
-      setItems(data.data);
+      const { data, meta: { pagination: { pageCount } } } = await res.json();
+      setMaxPagesCount(pageCount)
+      setItems(data);
     };
 
     getComments();
-  }, []);
+  }, [page]);
 
   const fetchComments = async () => {
     const res = await fetch(
-     `https://jsonplaceholder.typicode.com/comments?_page=${page}&_limit=20`
+      `https://jsonplaceholder.typicode.com/comments?_page=${page}&_limit=20`
     );
-    const data = await res.json();
+    const { data } = await res.json();
     console.log('data :>> ', data.data);
-    return data.data;
+    return data;
   };
 
   const fetchData = async () => {
@@ -37,7 +39,7 @@ function App() {
     const commentsFormServer = await fetchComments();
 
     setItems([...items, ...commentsFormServer]);
-    if (commentsFormServer.length === 0 || commentsFormServer.length < 20) {
+    if (page >= maxPagesCount) {
       sethasMore(false);
     }
     setpage(page + 1);
@@ -55,9 +57,7 @@ function App() {
     >
       <div className="container">
         <div className="row m-2">
-          {items && items.map((item) => {
-            return <div key={item.id}>{item.attributes.title}</div>;
-          })}
+          {items && items.map((item) => <div key={item.id}>{item.attributes.title}</div>)}
         </div>
       </div>
     </InfiniteScroll>
